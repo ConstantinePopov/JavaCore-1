@@ -1,0 +1,123 @@
+# Установка
+
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.Date;
+
+public class Main {
+    public static void main(String[] args) {
+
+        StringBuilder logString = new StringBuilder();
+        Creating execution = new Creating();
+        
+        execution.dir("E://Games", logString);
+        execution.dir("E://Games/src", logString);
+        execution.dir("E://Games/res", logString);
+        execution.dir("E://Games/savegames", logString);
+        execution.dir("E://Games/temp", logString);
+        execution.dir("E://Games/src/main", logString);
+        execution.dir("E://Games/src/test", logString);
+        execution.dir("E://Games/res/drawables", logString);
+        execution.dir("E://Games/res/vectors", logString);
+        execution.dir("E://Games/res/icons", logString);
+        execution.file("E://Games/src/main","Main.java", logString);
+        execution.file("E://Games/src/main","Utils.java", logString);
+        execution.file("E://Games/temp","temp.txt", logString);
+
+
+        File tempFile = new File("E://Games/temp", "temp.txt");
+        try (FileWriter writer = new FileWriter(tempFile, false)) {
+            writer.write(logString.toString());
+            writer.flush();
+        } catch (IOException ex) {
+            System.out.println(ex.getMessage());
+        }
+    }
+}
+
+class Creating {
+    public void dir(String dirName, StringBuilder logString) {
+        File dir = new File(dirName);
+        if (dir.mkdir()) {
+            logString.append(new Date()).append("| Directory ").append(dir.toString()).append(" successfully created.\n");
+        } else {
+            logString.append(new Date()).append("| Directory ").append(dir.toString()).append(" already exists.\n");
+        }
+    }
+
+    public void file(String dirName, String fileName, StringBuilder logString) {
+        File file = new File(dirName, fileName);
+        try {
+            if (file.createNewFile()) {
+                logString.append(new Date()).append("| File ").append(file.toString()).append(" successfully created.\n");
+            } else {
+                logString.append(new Date()).append("| File ").append(file.toString()).append(" already exists.\n");
+            }
+        } catch (IOException ex) {
+            System.out.println(ex.getMessage());
+        }
+    }
+}
+
+# Сохранение
+
+import java.io.*;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
+
+public class Main {
+    public static void main(String[] args) {
+
+        String[] arrayOfFiles = {"E://Games/savegames/save1.dat", "E://Games/savegames/save2.dat", "E://Games/savegames/save3.dat"};
+
+        GameProgress gameProgress1 = new GameProgress(94, 5, 1, 100.1);
+        GameProgress gameProgress2 = new GameProgress(81, 7, 2, 350.2);
+        GameProgress gameProgress3 = new GameProgress(53, 10, 3, 412.7);
+
+        Game game = new Game();
+        game.saveGame(arrayOfFiles[0], gameProgress1);
+        game.saveGame(arrayOfFiles[1], gameProgress2);
+        game.saveGame(arrayOfFiles[2], gameProgress3);
+
+        game.zipFiles("E://Games/savegames/output.zip", arrayOfFiles);
+
+        for (int i = 0; i < arrayOfFiles.length; i++) {
+            File file = new File(arrayOfFiles[i]);
+            if (file.delete())
+                System.out.println("File " + i + " deleted.");
+        }
+    }
+}
+
+class Game {
+    public void saveGame(String path, GameProgress game) {
+        try (FileOutputStream fos = new FileOutputStream(path);
+             ObjectOutputStream oos = new ObjectOutputStream(fos)) {
+            oos.writeObject(game);
+        } catch (Exception ex) {
+            System.out.println(ex.getMessage());
+        }
+    }
+
+    public void zipFiles(String zipPath, String[] arrayOfFiles) {
+
+        try (ZipOutputStream zout = new ZipOutputStream(new FileOutputStream(zipPath))) {
+            for (String file : arrayOfFiles) {
+                try (FileInputStream fis = new FileInputStream(file);) {
+                    ZipEntry entry = new ZipEntry(file.split("/")[file.split("/").length - 1]);
+                    zout.putNextEntry(entry);
+                    byte[] buffer = new byte[fis.available()];
+                    fis.read(buffer);
+                    zout.write(buffer);
+                    zout.closeEntry();
+                } catch (Exception ex) {
+                    System.out.println(ex.getMessage());
+                }
+            }
+        } catch (Exception ex) {
+            System.out.println(ex.getMessage());
+        }
+    }
+}
+
